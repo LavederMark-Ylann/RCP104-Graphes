@@ -13,6 +13,7 @@ import (
 	charts "github.com/go-echarts/go-echarts/v2/charts"
 	components "github.com/go-echarts/go-echarts/v2/components"
 	opts "github.com/go-echarts/go-echarts/v2/opts"
+	types "github.com/go-echarts/go-echarts/v2/types"
 )
 
 type Graph struct {
@@ -84,6 +85,8 @@ func printGraph(g Graph) {
 	graph := charts.NewGraph()
 	graph.SetGlobalOptions(
 		charts.WithTitleOpts(opts.Title{Title: "Graph rendered"}),
+		charts.WithInitializationOpts(opts.Initialization{Theme: types.ThemeWesteros}),
+		charts.WithTooltipOpts(opts.Tooltip{Show: true}),
 	)
 	convertedNodes := make([]opts.GraphNode, 0)
 	for _, node := range g.Nodes {
@@ -91,16 +94,24 @@ func printGraph(g Graph) {
 	}
 	convertedEdges := make([]opts.GraphLink, 0)
 	for _, edge := range g.Edges {
-		sourceIndex, _ := strconv.Atoi(edge.Source.Name)
-		destinationIndex, _ := strconv.Atoi(edge.Destination.Name)
 		convertedEdges = append(convertedEdges, opts.GraphLink{
-			Source: convertedNodes[sourceIndex-1],
-			Target: convertedNodes[destinationIndex-1],
+			Source: edge.Source.Name,
+			Target: edge.Destination.Name,
 			Value:  float32(edge.Weight),
 		})
+		fmt.Println("Source: " + edge.Source.Name + " Target: " + edge.Destination.Name + " Value: " + strconv.Itoa(edge.Weight))
 	}
 
-	graph.AddSeries("graph", convertedNodes, convertedEdges)
+	graph.AddSeries("graph", convertedNodes, convertedEdges,
+		charts.WithGraphChartOpts(
+			opts.GraphChart{
+				Force:  &opts.GraphForce{Repulsion: 5000},
+				Layout: "circular",
+				Roam:   true,
+			}),
+		charts.WithLabelOpts(opts.Label{Show: true, Position: "right"}),
+		charts.WithMarkPointStyleOpts(opts.MarkPointStyle{Label: &opts.Label{Show: true}}),
+	)
 
 	page := components.NewPage()
 	page.AddCharts(graph)
